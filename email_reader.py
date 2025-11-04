@@ -19,7 +19,7 @@ def fetch_unread_emails(single=True):
         logger.info("Auth OK, selecting inbox for unread mails")
         conn.select("INBOX")
 
-        typ, msgnums = conn.search(None, "UNSEEN")
+        typ, msgnums = conn.search(None, "SEEN")
         allmails = []
 
         for num in msgnums[0].split():
