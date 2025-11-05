@@ -4,14 +4,15 @@ from mistralai import Mistral, SDKError
 from Logging.logger import logger
 import json 
 from ErrorAI import ServiceTier
+from json import JSONDecodeError
+import traceback
 
-load_dotenv
+load_dotenv()
 
 SDK_KEY = os.getenv("SDK_KEY")
 client= Mistral(api_key=SDK_KEY)
 
-def mail_support(mail):
-    logger.info("Start calling ai")
+def mail_summary(mail):
     try:
        prompt=f"""
          You are an intelligent email assistant.
@@ -28,17 +29,21 @@ def mail_support(mail):
            model="mistral-small-latest",
            messages=[{"role": "user", "content": prompt}]
        )
-       json_str = chat_response.strip('```json\n').strip('\n```')
+       content = chat_response.choices[0].message.content
+       json_str = content.strip("```json").strip("```").strip()
        data = json.loads(json_str)
-       return data
-    except AttributeError as err:
-        print("nasta")
-        logger.error(f"{e}")
-        return err
+       print(data)
+       return data, mail["sender"]
+    except JSONDecodeError as err:
+        logger.error("Invalid JSON returned by AI")
+        logger.error(f"Raw output: {content}")
+        raise ServiceTier("AI returned malformed JSON") from err
+
     except SDKError as err:
-        logger.error(f"{err.body}")
-        return err
+        logger.error(f"Mistral SDK Error: {err.body}")
+        raise ServiceTier(f"Mistral SDK Error: {err.body}")
+
     except Exception as e:
-        import traceback
         traceback.print_exc()
-        return e
+        logger.error(f"Unexpected error: {e}")
+        raise ServiceTier(f"Unexpected error during mail analysis: {e}")

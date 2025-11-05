@@ -12,32 +12,29 @@ port = int(os.getenv("PORT"))
 
 def fetch_unread_emails(single=True):
     logger.critical("Starting connection with IMAP server")
-
     try:
         conn = imaplib.IMAP4_SSL(server, port)
         conn.login(username, pwd)
         logger.info("Auth OK, selecting inbox for unread mails")
         conn.select("INBOX")
 
-        typ, msgnums = conn.search(None, "SEEN")
+        typ, msgnums = conn.uid('search', None, 'SEEN')
         allmails = []
 
         for num in msgnums[0].split():
-            result, msg_data = conn.fetch(num, "(RFC822)")
+            result, msg_data = conn.uid('fetch', num, '(RFC822)')
             msg = email.message_from_bytes(msg_data[0][1])
-
             # Decode subject properly
             subject, encoding = decode_header(msg["subject"])[0]
             if isinstance(subject, bytes):
                 subject = subject.decode(encoding or "utf-8")
-
             full_mail = {
+                "uid":num.decode(),
                 "sender": msg["from"],
                 "subject": subject,
                 "body": None,
                 "date": msg["date"],
             }
-
             body = None
             if msg.is_multipart():
                 for part in msg.walk():
@@ -49,13 +46,12 @@ def fetch_unread_emails(single=True):
                         break
             else:
                 body = msg.get_payload(decode=True).decode(errors="ignore")
-
-            full_mail["body"] = body
+                full_mail["body"] = body
             allmails.append(full_mail)
 
             if single:
                 break  # Fetch only the first unread mail if requested
-
+        conn.logout()
         return allmails
 
     except ConnectionError as e:

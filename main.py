@@ -1,23 +1,27 @@
+import schedule
+import time
 from Logging.logger import logger
 from email_reader import fetch_unread_emails
-from email_summary import mail_support
-from email_writer import send_answer
+from email_summary import mail_summary
+from action_routes import action_router
 
-emails=fetch_unread_emails()
-latest = fetch_unread_emails(False)
-print(emails)
 
 def main():
+    emails=fetch_unread_emails()
+   # latest = fetch_unread_emails(False)
     logger.info("start")
     try: 
-      print("qua arrivo")
       # for mail in emails:
-      resp= mail_support(emails[0])
-      if "error" not in resp and resp.needs_repl == True:
-        send_answer(resp)
+      resp, sender = mail_summary(emails[0])
+      if "error" not in resp:
+        action_router(resp, sender, emails[0])
     except Exception as e:
        logger.critical(f"generic err: {e}")
- 
 
-if __name__ == "__main__":
-    main()
+schedule.every(5).minutes.do(main)
+
+while True:
+   schedule.run_pending()
+   time.sleep(1)
+# if __name__ == "__main__":
+#     main()
