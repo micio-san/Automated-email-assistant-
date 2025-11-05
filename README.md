@@ -1,7 +1,7 @@
 ### ⚙️ Automation & Scripting  
 **Automated Email Assistant:**  
  Automatically reply, label, or forward emails based on their content.  
- 🔧 *Libraries:* `imaplib`, `smtplib`, `email`, `openai` (for smart replies).  
+ 🔧 *Libraries:* `imaplib`, `smtplib`, `email`, `openai(mistralai)` (for smart replies).  
 
 **File Organizer with GUI:**  
  Automatically sort files into folders by type, size, or creation date, with a simple UI.  
